@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "obras")
@@ -59,5 +61,8 @@ public class Obra {
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean arquivado = false; // novo campo para arquivamento lógico
+
+    @OneToMany(mappedBy = "obra",cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Etapa> etapas = new ArrayList<>();
 
 }
