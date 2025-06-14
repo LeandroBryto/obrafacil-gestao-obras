@@ -6,7 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,11 +23,12 @@ public class DiarioObra {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "data_hora",nullable = false)
+    @JoinColumn(name = "Obra_id",nullable = false)
     private Obra obra;
 
     @Column(name = "data_hora", nullable = false)
-    private LocalDate dataHora;
+    private LocalDateTime dataHora;
+
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -63,6 +65,6 @@ public class DiarioObra {
     @JoinColumn(name = "etapa_id")
     private Etapa etapaRelacionada;
 
-    @Column(nullable = false,columnDefinition = "BOOLEAN DEFAUT  FALSE")
+    @Column(nullable = false,columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean critico = false;
 }

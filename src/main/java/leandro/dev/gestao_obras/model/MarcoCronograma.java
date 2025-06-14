@@ -35,5 +35,4 @@ public class MarcoCronograma {
 
     private boolean concluido = false;
 
-    
 }

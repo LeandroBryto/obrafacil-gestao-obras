@@ -22,7 +22,7 @@ public class Etapa {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Column(name = "obra_id",nullable = false)
+    @JoinColumn(name = "obra_id",nullable = false)
     private Obra obra;
 
     @Column(nullable = false)

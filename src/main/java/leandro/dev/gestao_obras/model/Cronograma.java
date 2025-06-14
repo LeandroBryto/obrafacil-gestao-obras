@@ -21,7 +21,7 @@ public class Cronograma {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "obra_id", nullable = false, unique = true)
     private Obra obra;
 
@@ -46,7 +46,6 @@ public class Cronograma {
     @Column(name = "marco")
     private List<String> marcosImportantes = new ArrayList<>();
 
-    @Lob
-    private String registraAtrasos;
+    private String status;
 
 }

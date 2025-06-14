@@ -62,7 +62,5 @@ public class Obra {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean arquivado = false; // novo campo para arquivamento lógico
 
-    @OneToMany(mappedBy = "obra",cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Etapa> etapas = new ArrayList<>();
 
 }

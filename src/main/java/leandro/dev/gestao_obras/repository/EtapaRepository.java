@@ -9,5 +9,6 @@ import java.util.List;
 @Repository
 public interface EtapaRepository extends JpaRepository<Etapa, Long> {
 
-    List<Etapa>findByObraIdOrdermAsc(Long obraId);
+    List<Etapa> findByObraIdOrderByOrdemAsc(Long obraId);
+
 }
