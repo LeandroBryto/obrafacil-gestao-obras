@@ -22,57 +22,64 @@ public class ObraCntroller {
     private ObraRepository obraRepository;
 
     @PostMapping
-    public ResponseEntity<Obra> cadastraObra(@RequestBody Obra obra){
+    public ResponseEntity<Obra> cadastraObra(@RequestBody Obra obra) {
         try {
             obra.setArquivado(false);// Garante que novas obras nao sao criadas arquivasa
             Obra novaObra = obraRepository.save(obra);
             return new ResponseEntity<>(novaObra, HttpStatus.CREATED);
-        } catch (Exception e ){
-            return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     // endpoint para listar todas as obras (com filtros opcionais)
 
     @GetMapping
     public ResponseEntity<List<Obra>> listaObras(
-            @RequestParam(required = false)StatusObra status,
-            @RequestParam(required = false)String cliente,
-            @RequestParam(required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate dataInicio,
-            @RequestParam(required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate dataFim,
-            @RequestParam(defaultValue = "false") boolean incluirArquivadas){
+            @RequestParam(required = false) StatusObra status,
+            @RequestParam(required = false) String cliente,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(defaultValue = "false") boolean incluirArquivadas) {
         try {
             List<Obra> obras = obraRepository.findAll();
 
             // aplica filtro de arquivadas
-            if (!incluirArquivadas){
-                obras = obras.stream().filter( o->!o.isArquivado()).collect(Collectors.toList());
+            if (!incluirArquivadas) {
+                obras = obras.stream().filter(o -> !o.isArquivado()).collect(Collectors.toList());
             }
             //aplica filtros adicionais se fornecidos
-            if (status != null){
+            if (status != null) {
                 obras = obras.stream().filter(o -> o.getStatus() == status).collect(Collectors.toList());
             }
-            if (cliente != null && !cliente.isEmpty()){
+            if (cliente != null && !cliente.isEmpty()) {
                 obras = obras.stream().filter(o -> o.getCliente().getNome().equalsIgnoreCase(cliente)).collect(Collectors.toList());
             }
             // filtro de periodo (considerando data de inicio da obra)
-            if (dataInicio != null){
-                obras = obras.stream().filter( o -> o.getDataInicio() != null && !o.getDataInicio().isBefore(dataInicio)).collect((Collectors.toList()));
+            if (dataInicio != null) {
+                obras = obras.stream().filter(o -> o.getDataInicio() != null && !o.getDataInicio().isBefore(dataInicio)).collect((Collectors.toList()));
             }
-            if (obras.isEmpty()){
+            if (obras.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
             return new ResponseEntity<>(obras, HttpStatus.OK);
-        } catch (Exception e){
+        } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     // Endpoint para buscar uma obra por ID
-    GetMapping("/{id}")
-        public ResponseEntity<Obra> buscarObraPorId(@PathVariable("id") Long id){
-            Optional<Obra> obraData = obraRepository.findById(id);
-            // Retorna 404 se estiver arquivada e nao for explicitamente pedido  para incluir arquivadas (poderia ser um parâmetro
-            if (obraData.isPresent() && !obraData.get().isArquivado()){
-                return new ResponseEntity<>(obraData)
-            }
+    @GetMapping("/{id}")
+    public ResponseEntity<Obra> buscarObraPorId(@PathVariable("id") Long id) {
+        Optional<Obra> obraData = obraRepository.findById(id);
+        // Retorna 404 se estiver arquivada e nao for explicitamente pedido  para incluir arquivadas (poderia ser um parâmetro
+        if (obraData.isPresent() && !obraData.get().isArquivado()) {
+            return new ResponseEntity<>(obraData.get(), HttpStatus.OK);
+        } else if (obraData.isPresent() && obraData.get().isArquivado()) {
+            // poderia retornar um status diferente ou permitir acesso baseado em permissão
+            return new ResponseEntity<>(HttpStatus.GONE); // ou not_found
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
 }
+
