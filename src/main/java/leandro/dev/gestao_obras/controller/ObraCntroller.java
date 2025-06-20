@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -65,4 +66,13 @@ public class ObraCntroller {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // Endpoint para buscar uma obra por ID
+    GetMapping("/{id}")
+        public ResponseEntity<Obra> buscarObraPorId(@PathVariable("id") Long id){
+            Optional<Obra> obraData = obraRepository.findById(id);
+            // Retorna 404 se estiver arquivada e nao for explicitamente pedido  para incluir arquivadas (poderia ser um parâmetro
+            if (obraData.isPresent() && !obraData.get().isArquivado()){
+                return new ResponseEntity<>(obraData)
+            }
+        }
 }
