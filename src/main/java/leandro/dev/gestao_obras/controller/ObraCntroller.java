@@ -81,5 +81,30 @@ public class ObraCntroller {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+
+    // Endpoint para atualizar informaçoes de uma obra
+    @PutMapping("/{id}")
+    public ResponseEntity<Obra> atualizarObra(@PathVariable("id") Long id ,@RequestBody Obra obraAtualizada){
+        Optional<Obra> obraData = obraRepository.findById(id);
+        if (obraData.isPresent() && !obraData.get().isArquivado()){
+            Obra obraExistente = obraData.get();
+            // Atualizar os campos ( execeto ID e arquivado)
+            obraExistente.setNome(obraAtualizada.getNome());
+            obraExistente.setEndereco(obraAtualizada.getEndereco());
+            obraExistente.setCliente(obraAtualizada.getCliente());
+            obraExistente.setDataInicio(obraAtualizada.getDataInicio());
+            obraExistente.setDataTerminoPrevista(obraAtualizada.getDataTerminoPrevista());
+            obraExistente.setResponsavelTecnico(obraAtualizada.getResponsavelTecnico());
+            obraExistente.setTipoObra(obraAtualizada.getTipoObra());
+            obraExistente.setAreaTotal(obraAtualizada.getAreaTotal());
+            obraExistente.setValorOrcado(obraAtualizada.getValorOrcado());
+            obraExistente.setStatus(obraAtualizada.getStatus());
+            obraExistente.setDescricao(obraAtualizada.getDescricao());
+
+            return new ResponseEntity<>(obraRepository.save(obraExistente),HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
 
