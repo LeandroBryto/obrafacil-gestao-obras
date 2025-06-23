@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/obras")
-public class ObraCntroller {
+public class ObraController {
 
     @Autowired
     private ObraRepository obraRepository;
@@ -105,6 +105,21 @@ public class ObraCntroller {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+
     }
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Obra> alterarStatusObra(@PathVariable("id") Long id, @RequestBody StatusObra novoStatus) {
+        Optional<Obra> obraData = obraRepository.findById(id);
+
+        if (obraData.isPresent() && !obraData.get().isArquivado()) {
+            Obra obra = obraData.get();
+            obra.setStatus(novoStatus); // OK, se novoStatus for compatível com o tipo do campo status
+            return new ResponseEntity<>(obraRepository.save(obra), HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 }
 
