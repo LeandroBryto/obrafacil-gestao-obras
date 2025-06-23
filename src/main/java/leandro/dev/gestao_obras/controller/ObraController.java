@@ -108,6 +108,7 @@ public class ObraController {
 
 
     }
+    // endpoint para alterar o status de uma obra
     @PatchMapping("/{id}/status")
     public ResponseEntity<Obra> alterarStatusObra(@PathVariable("id") Long id, @RequestBody StatusObra novoStatus) {
         Optional<Obra> obraData = obraRepository.findById(id);
@@ -120,6 +121,20 @@ public class ObraController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    // Endpoint para arquivar uma obra (deleçao lógica)
+    @DeleteMapping("{/id}")
+    public ResponseEntity<HttpStatus> arquivarObra(@PathVariable("id") Long id ){
+        Optional<Obra> obraData = obraRepository.findById(id);
+        if (obraData.isPresent()){
+            Obra obra = obraData.get();
+            obra.setArquivado(true);
+            obraRepository.save(obra);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 
 }
 
