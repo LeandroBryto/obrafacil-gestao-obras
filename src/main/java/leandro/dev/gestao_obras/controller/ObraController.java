@@ -134,7 +134,23 @@ public class ObraController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    // Endpoint para Desarquivar uma obra
+    @PatchMapping("/{id}/desarquivar")
+    public ResponseEntity<Obra> desarquivarObra(@PathVariable("id") Long id ){
+        Optional<Obra> obraDate = obraRepository.findById(id);
 
+        if (obraDate.isPresent()){
+            Obra obra = obraDate.get();
+            if (!obra.isArquivado()){
+                // Pode retonar um erro ou simplesmente a obra como está
+                return new ResponseEntity<>(obra,HttpStatus.OK); // ja está desarquivada
+            }
+            obra.setArquivado(false);
+            return new ResponseEntity<>(obraRepository.save(obra),HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
 }
 
