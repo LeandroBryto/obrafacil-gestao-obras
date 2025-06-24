@@ -14,6 +14,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Controlador de obras do sistema.
+ * Lida com endpoints de cadastro, edição, status e arquivamento.
+ *
+ * @author Leandro
+ * @since 2025-06-15
+ * @version 1.0 - finalizado em 2025-06-23
+ */
+
+
 @RestController
 @RequestMapping("/api/obras")
 public class ObraController {
@@ -148,6 +158,20 @@ public class ObraController {
             obra.setArquivado(false);
             return new ResponseEntity<>(obraRepository.save(obra),HttpStatus.OK);
         } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // Endpont para obter resumo de progresso de obra
+
+    @GetMapping("/{id}/resumo")
+    public ResponseEntity<String> getResumoObra(@PathVariable("id") Long id){
+        Optional<Obra> obraData = obraRepository.findById(id);
+        if (obraData.isPresent()){
+            // TODO : IMPLEMENTAR LÓGICA PARA GERAR UM RESUMO DO PROGRESSO DA OBRA.
+            // ISSO PODE ENVOLVER A CONSULTA DE ETAPAS , CHECKLIST
+            return new ResponseEntity<>("RESUMO DE OBRA"+ id + "(a ser implementado)",HttpStatus.OK);
+        }else{
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
