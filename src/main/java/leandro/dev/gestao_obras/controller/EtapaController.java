@@ -46,4 +46,21 @@ public class EtapaController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // endpoint para listar todos as etapas de uma obra especifica
+    @GetMapping("/obra/{obraId}/etapas")
+    public ResponseEntity<List<Etapa>> listarEtapasPorObra(@PathVariable Long  obraId){
+        Optional<Obra> obraData = obraRepository.findById(obraId);
+        if (obraData.isEmpty() || obraData.get().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // obra não encontrada ou arquivada
+        }
+        try {
+            List<Etapa> etapas = etapaRepository.findByObraIdOrderByOrdemAsc(obraId);
+            if (etapas.isEmpty()){
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(etapas,HttpStatus.OK);
+        } catch (Exception e){
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
