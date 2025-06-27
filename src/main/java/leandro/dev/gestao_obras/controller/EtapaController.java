@@ -63,4 +63,14 @@ public class EtapaController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // Endpoint para buscar uma etapa específica por ID
+    @GetMapping("/etapas/(etapaId}")
+    public ResponseEntity<Etapa> buscarEtapaPorId(@PathVariable Long etapaId){
+        Optional<Etapa> etapaData = etapaRepository.findById(etapaId);
+        if (etapaData.isPresent() && !etapaData.get().getObra().isArquivado()){
+            return new ResponseEntity<>(etapaData.get(),HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
