@@ -1,6 +1,7 @@
 package leandro.dev.gestao_obras.controller;
 
 
+import leandro.dev.gestao_obras.enums.StatusEtapa;
 import leandro.dev.gestao_obras.model.Etapa;
 import leandro.dev.gestao_obras.model.Obra;
 import leandro.dev.gestao_obras.repository.CheckListItemRepository;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -97,6 +99,52 @@ public class EtapaController {
             return new ResponseEntity<>(etapaRepository.save(etapaExistente),HttpStatus.OK);
        } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    // Endpoint para atualizar progresso e status de uma etapa(PATCH)
+    @PatchMapping("/etapas/{etapaId}/progresso")
+    public ResponseEntity<Etapa> ataulizarProgressoEtapa(@PathVariable Long etapaId, @RequestBody Map<String , Object> updates){
+        Optional<Etapa> etapaData = etapaRepository.findById(etapaId);
+        if (etapaData.isEmpty() || etapaData.get().getObra().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Etapa etapa = etapaData.get();
+        boolean updated = false;
+
+        if (updates.containsKey("percentualConclusao")){
+            try {
+                Integer percentual = Integer.parseInt(updates.get("percentualCoclusao").toString());
+                if (percentual >= 0 && percentual <= 100){
+                    etapa.setPercentualConclusao(percentual);
+                    updated = true;
+                }else {
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);// VALOR INVÁLIDO
+                }
+            }catch (NumberFormatException e){
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // formato invalido
+            }
+        }
+        if (updates.containsKey("status")){
+            try {
+                StatusEtapa novoStatus = StatusEtapa.valueOf(updates.get("status").toString().toUpperCase());
+                etapa.setStatus(novoStatus);
+                updated = true;
+            }catch (IllegalArgumentException e){
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // status invalido
+            }
+        }
+        if (updated){
+            // atualiza datas reais se o status mudar para EM_ANDAMENTOS OU CONCLUIDA
+            if (etapa.getStatus() == StatusEtapa.EM_ANDAMENTO && etapa.getDataRealInicio() == null){
+                etapa.setDataRealInicio(java.time.LocalDate.now());
+            }
+            if (etapa.getStatus() == StatusEtapa.CONCLUIDO && etapa.getDataRealInicio() == null){
+                etapa.setDataRealTermino(java.time.LocalDate.now());
+                etapa.setPercentualConclusao(100); // garante 100% ao concluir
+            }
+            return new ResponseEntity<>(etapaRepository.save(etapa),HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(etapa, HttpStatus.OK);// nenhuma alteração válida foi feita
         }
     }
 
