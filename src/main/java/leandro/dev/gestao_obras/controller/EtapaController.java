@@ -74,5 +74,30 @@ public class EtapaController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    // Endpoint para atualizar informçoes de uma etapa
+    @PutMapping("/etapas/{etapaId}")
+    public ResponseEntity<Etapa> atualizarEtapa(@PathVariable Long etapaId, @RequestBody Etapa etapaAtualizada){
+        Optional<Etapa> etapaData = etapaRepository.findById(etapaId);
+        if (etapaData.isPresent() && !etapaData.get().getObra().isArquivado()){
+            Etapa etapaExistente = etapaData.get();
+            // atualiza os campos permitidos
+            etapaExistente.setNome(etapaAtualizada.getNome());
+            etapaExistente.setDescricao(etapaAtualizada.getDescricao());
+            etapaExistente.setDataPrevistaInicio(etapaAtualizada.getDataPrevistaInicio());
+            etapaExistente.setDataPrevistaTermino(etapaAtualizada.getDataPrevistaTermino());
+            etapaExistente.setDataRealInicio(etapaAtualizada.getDataRealInicio());
+            etapaExistente.setDataPrevistaTermino(etapaAtualizada.getDataPrevistaTermino());
+            etapaExistente.setResponsavel(etapaAtualizada.getResponsavel());
+            etapaExistente.setObservacoes(etapaAtualizada.getObservacoes());
+            //etapaExistente.setPercentualConclusao(etapaAtualizada.getPercentualConclusao()); // Percentual e calculado
+            //etapaExistente.setStatus(etapaAtualizada.getStatus());
+            // Recalcula etatus baseado nas data , se necessario
+            // if(etapaExistente.getDataRealInicio() != null && etapaExistente.getDataRealTermino() == null){
+            // etapaExistente.setStatus(StatusEtapa.EM_ANDAMENTO);
+            return new ResponseEntity<>(etapaRepository.save(etapaExistente),HttpStatus.OK);
+       } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 
 }
