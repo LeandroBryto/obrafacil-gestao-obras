@@ -208,5 +208,26 @@ public class EtapaController {
         return new ResponseEntity<>(relatorio,HttpStatus.OK);
 
     }
+    // Endpoint para deletar uma etapa
+    @DeleteMapping("/etapa/{etapaId}")
+    @Transactional
+    public ResponseEntity<HttpStatus> deletarEtapa(@PathVariable Long etapaId){
+        Optional<Etapa> etapaData = etapaRepository.findById(etapaId);
+        if (etapaData.isPresent() && !etapaData.get().getObra().isArquivado()){
+            try {
+                // Deleta itens dp checklist associados (se houver cascade=REMOVE)
+                // OU deleta manualmente
+                checkListItemRepository.deleteAll(checkListItemRepository.findByEtapaId(etapaId));
+                etapaRepository.deleteById(etapaId);
+                // reajustar a ordem das etapas restantes pode ser necessario aqui
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }catch (Exception e ){
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
 
 }
