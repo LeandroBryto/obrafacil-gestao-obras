@@ -181,6 +181,32 @@ public class EtapaController {
             return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // Endpoint para gerar um relatório simples de progresso da obra
+    @GetMapping("/obras/{obraId}relario-progresso")
+    public ResponseEntity<Map<String,Object>> gerarRelatorioProgresso(@PathVariable Long obraId){
+        Optional<Obra> obraData = obraRepository.findById(obraId);
+        if (obraData.isEmpty() || obraData.get().isArquivado()){
+            return  new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Obra obra = obraData.get();
+        List<Etapa> etapas = etapaRepository.findByObraIdOrderByOrdemAsc(obraId);
 
+        // calcula progresso geral simples ( média dos percentuais das etapas)
+        double progressoGeral = etapas.stream()
+                .mapToInt(Etapa::getPercentualConclusao)
+                .average()
+                .orElse(0.0);
+
+        Map<String, Object> relatorio = Map.of(
+                "obraId", obra.getId(),
+                "obraNome", obra.getNome(),
+                "statusObra", obra.getStatus(),
+                "progressoGeralPercentual", String.format("%.2f", progressoGeral),
+                "totalEtapas", etapas.size(),
+                "etapas", etapas
+        );
+        return new ResponseEntity<>(relatorio,HttpStatus.OK);
+
+    }
 
 }
