@@ -132,7 +132,7 @@ public class ObraController {
         }
     }
     // Endpoint para arquivar uma obra (deleçao lógica)
-    @DeleteMapping("{/id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> arquivarObra(@PathVariable("id") Long id ){
         Optional<Obra> obraData = obraRepository.findById(id);
         if (obraData.isPresent()){
