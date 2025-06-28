@@ -1,6 +1,7 @@
 package leandro.dev.gestao_obras.controller;
 
 
+import jakarta.transaction.Transactional;
 import leandro.dev.gestao_obras.enums.StatusEtapa;
 import leandro.dev.gestao_obras.model.Etapa;
 import leandro.dev.gestao_obras.model.Obra;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -147,5 +150,37 @@ public class EtapaController {
             return new ResponseEntity<>(etapa, HttpStatus.OK);// nenhuma alteração válida foi feita
         }
     }
+    @PostMapping("/obras/{obraId}/etapas/reordenar")
+    @Transactional
+    public ResponseEntity<List<Etapa>> reordenarEtapas(@PathVariable Long obraId, @RequestBody List<Long> idsOrdenados){
+        Optional<Obra> obraData = obraRepository.findById(obraId);
+        if (obraData.isEmpty() || obraData.get().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        List<Etapa> etapasDaObra = etapaRepository.findByObraIdOrderByOrdemAsc(obraId);
+        if (etapasDaObra.size()!= idsOrdenados.size()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);// numero de IDs nao corresponde
+        }
+        Map<Long, Etapa> mapaEtapas = etapasDaObra.stream().collect(Collectors.toMap(Etapa::getId, e -> e));
+
+        try {
+            for (int i = 0; i< idsOrdenados.size(); i++){
+                Long etapaId = idsOrdenados.get(i);
+                Etapa etapa = mapaEtapas.get(etapaId);
+                if (etapa == null){
+                    throw new IllegalArgumentException("ID de etapa inválido na lista:" + etapaId);
+                }
+                etapa.setOrdem(i + 1); // Define a nova ordem (base 1)
+                etapaRepository.save(etapa);
+            }
+            // Retorna a lista reordenada
+            List<Etapa> etapasReordenadas = etapaRepository.findByObraIdOrderByOrdemAsc(obraId);
+            return new ResponseEntity<>(etapasReordenadas, HttpStatus.OK);
+        }catch (Exception e ){
+            // Loggar erro
+            return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }
