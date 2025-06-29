@@ -1,5 +1,6 @@
 package leandro.dev.gestao_obras.controller;
 
+import jakarta.persistence.GeneratedValue;
 import leandro.dev.gestao_obras.model.CheckListItem;
 import leandro.dev.gestao_obras.model.Etapa;
 import leandro.dev.gestao_obras.repository.CheckListItemRepository;
@@ -8,12 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.IllegalFormatCodePointException;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -37,6 +36,22 @@ public class ChecklistItemController {
             CheckListItem novoItem = checkListItemRepository.save(checkListItem);
             // TODO: adcionar lógica para atualizar p percentual de conclusão da etapa pai
             return new ResponseEntity<>(HttpStatus.CREATED);
+        }catch (Exception e){
+            return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/etapa/{etapaId}itens")
+    public ResponseEntity<List<CheckListItem>> listarChecklistItemsPorEtapa(@PathVariable Long etapaId){
+        Optional<Etapa> etapaData = etapaRepository.findById(etapaId);
+        if (etapaData.isEmpty() || etapaData.get().getObra().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        try {
+            List<CheckListItem> items = checkListItemRepository.findByEtapaId(etapaId);
+            if (items.isEmpty()){
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return new ResponseEntity<>(items, HttpStatus.OK);
         }catch (Exception e){
             return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
         }
