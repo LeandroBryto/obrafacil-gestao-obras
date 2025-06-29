@@ -56,4 +56,14 @@ public class ChecklistItemController {
             return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // Endpoint para buscar um item de checklist especifico por ID
+    @GetMapping("/checklist-items/{itemId}")
+    public ResponseEntity<CheckListItem> buscaChecklistItemPorId(@PathVariable Long itemId){
+        Optional<CheckListItem> itemData = checkListItemRepository.findById(itemId);
+        if (itemData.isPresent() && !itemData.get().getEtapa().getObra().isArquivado()){
+            return new ResponseEntity<>(itemData.get(),HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
