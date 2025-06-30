@@ -1,6 +1,7 @@
 package leandro.dev.gestao_obras.controller;
 
 import jakarta.persistence.GeneratedValue;
+import leandro.dev.gestao_obras.enums.StatusChecklistItem;
 import leandro.dev.gestao_obras.model.CheckListItem;
 import leandro.dev.gestao_obras.model.Etapa;
 import leandro.dev.gestao_obras.repository.CheckListItemRepository;
@@ -86,4 +87,22 @@ public class ChecklistItemController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    @PatchMapping("/{id}/ status")
+    public ResponseEntity<CheckListItem> atualizarStatusChecklistItem(@PathVariable Long itemId,@RequestBody leandro.dev.gestao_obras.enums.StatusChecklistItem novoStaus){
+        Optional<CheckListItem> itemData = checkListItemRepository.findById(itemId);
+        if (itemData.isPresent() && !itemData.get().getEtapa().getObra().isArquivado()){
+            CheckListItem itemExistente = itemData.get();
+            itemExistente.setStatus(novoStaus);
+            // se concluido pode setar a data de conclusao automaticamente
+            if (novoStaus == StatusChecklistItem.CONCLUIDO && itemExistente.getDataConclusao()== null){
+                itemExistente.setDataConclusao(java.time.LocalDate.now());
+            }
+            CheckListItem itemSalvo = checkListItemRepository.save(itemExistente);
+            // TODO: Adícionar lógica para recalcular e atualizar o percentual de conclusão da Etaoa
+            return new ResponseEntity<>(itemSalvo , HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+   
 }
