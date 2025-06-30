@@ -66,4 +66,24 @@ public class ChecklistItemController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
+    // Endpoint para atualizar informações de um item de checklist
+    @PutMapping("/{id}")
+    public ResponseEntity<CheckListItem> atualizarChecklistItem(@PathVariable Long itemId,@RequestBody CheckListItem itemAtualizado){
+        Optional<CheckListItem> itemData = checkListItemRepository.findById(itemId);
+        if (itemData.isPresent() && !itemData.get().getEtapa().getObra().isArquivado()){
+                CheckListItem itemExistente = itemData.get();
+
+                // Atualiza os campos permitidos (nao permite mudar e etapa
+            itemExistente.setDescricao(itemAtualizado.getDescricao());
+            itemExistente.setStatus(itemAtualizado.getStatus());
+            itemExistente.setResponsavel(itemAtualizado.getResponsavel());
+            itemExistente.setDataConclusao(itemAtualizado.getDataConclusao());
+
+            CheckListItem itemSalvo = checkListItemRepository.save(itemExistente);
+            // TODO: Adicionar lógica para recalcular e atualizar o percentual de conclusão da Etapa pao
+            return new ResponseEntity<>(itemSalvo,HttpStatus.OK);
+        }else{
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
