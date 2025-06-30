@@ -104,5 +104,19 @@ public class ChecklistItemController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-   
+    @DeleteMapping("/{id}")
+    public ResponseEntity<HttpStatus> deletarChecklistItem(@PathVariable Long itemId){
+        Optional<CheckListItem> itemData = checkListItemRepository.findById(itemId);
+        if (itemData.isPresent() && !itemData.get().getEtapa().getObra().isArquivado()){
+            try {
+                checkListItemRepository.deleteById(itemId);
+
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }catch (Exception e){
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
