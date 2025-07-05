@@ -61,4 +61,15 @@ public class CronogramaController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // Endpoint para buscar o Cronograma de uma Obra
+    @GetMapping("/obras/{obraId}/cronograma")
+    public ResponseEntity<Cronograma> buscarCronogramaPorObra(@PathVariable Long obraId){
+        Optional<Obra> obraData = obraRepository.findById(obraId);
+        if (obraData.isEmpty() || obraData.get().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Optional<Cronograma> cronogramaData = cronogramaRepository.findByObraId(obraId);
+        return cronogramaData.map(cronograma -> new ResponseEntity<>(cronograma,HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
 }
