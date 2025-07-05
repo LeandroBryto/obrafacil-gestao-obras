@@ -117,5 +117,21 @@ public class DiarioObraController {
             @RequestParam(required = false) Long etapaId) {
         return listarRegistrosDiario(obraId,dataInicio,dataFim,tipo,etapaId);
     }
-    //
+    // Endpoint para exportar o diario de obra (filtrado) para PDF
+    @GetMapping("/obras/{obraId}/diario/exportar-pdf")
+    public ResponseEntity<String> exportarDiarioPdf(
+            @PathVariable Long obraId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) TipoRegistroDiario tipo,
+            @RequestParam(required = false) Long etapaId){
+        Optional<Obra> obraData = obraRepository.findById(obraId);
+        if (obraData.isEmpty() || obraData.get().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        // TODO: implementar exportação para PDF
+        return  new ResponseEntity<>("Exportação para PDF nao implementada ainda",HttpStatus.NOT_IMPLEMENTED);
+
+    }
+    
 }
