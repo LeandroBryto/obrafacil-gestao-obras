@@ -1,5 +1,6 @@
 package leandro.dev.gestao_obras.controller;
 
+import jakarta.persistence.criteria.Predicate;
 import leandro.dev.gestao_obras.enums.TipoRegistroDiario;
 import leandro.dev.gestao_obras.model.DiarioObra;
 import leandro.dev.gestao_obras.model.Etapa;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,7 +88,7 @@ public class DiarioObraController {
         }
         try {
             Specification<DiarioObra> spec = criarEspecificacaoFiltro(obraId,dataIncio,dataFim,tipo,etapaId);
-            List<DiarioObra> registro = diarioObraRepository.findById(spec);
+            List<DiarioObra> registro = diarioObraRepository.findAll(spec);
 
             if (registro.isEmpty()){
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -97,7 +100,7 @@ public class DiarioObraController {
         }
     }
     // Endpoint para buscar uma registro especifico do diario porID
-    @GetMapping("/obras/{obraId}/diario/relatorio")
+    @GetMapping("/diario/{diarioId}")
     public ResponseEntity<DiarioObra> buscarRegistroDiarioPorId(@PathVariable Long diarioId){
         Optional<DiarioObra> diarioData = diarioObraRepository.findById(diarioId);
         if (diarioData.isPresent() && !diarioData.get().getObra().isArquivado()){
@@ -133,5 +136,28 @@ public class DiarioObraController {
         return  new ResponseEntity<>("Exportação para PDF nao implementada ainda",HttpStatus.NOT_IMPLEMENTED);
 
     }
-    
+    // Método auxiliar para criar a especificação de filtro
+    private Specification<DiarioObra> criarEspecificacaoFiltro(
+            Long obraId, LocalDate dataInicio, LocalDate dataFim, TipoRegistroDiario tipo, Long etapaId) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("obra").get("id"), obraId));
+
+            if (dataInicio != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dataHora"), dataInicio.atStartOfDay()));
+            }
+            if (dataFim != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dataHora"), dataFim.atTime(LocalTime.MAX)));
+            }
+            if (tipo != null) {
+                predicates.add(cb.equal(root.get("tipo"), tipo));
+            }
+            if (etapaId != null) {
+                predicates.add(cb.equal(root.get("etapaRelacionada").get("id"), etapaId));
+            }
+
+            query.orderBy(cb.desc(root.get("dataHora")));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }
