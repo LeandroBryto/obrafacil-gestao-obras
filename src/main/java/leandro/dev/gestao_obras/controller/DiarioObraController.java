@@ -106,6 +106,16 @@ public class DiarioObraController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-   
 
+    // Endpoint para gerar im relatório simples do diário
+    @GetMapping("/obras/{obraId}/diario/relatorio")
+    public ResponseEntity<List<DiarioObra>>gerarRelatorio(
+            @PathVariable Long obraId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) TipoRegistroDiario tipo,
+            @RequestParam(required = false) Long etapaId) {
+        return listarRegistrosDiario(obraId,dataInicio,dataFim,tipo,etapaId);
+    }
+    //
 }
