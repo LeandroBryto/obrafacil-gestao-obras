@@ -72,4 +72,28 @@ public class CronogramaController {
         return cronogramaData.map(cronograma -> new ResponseEntity<>(cronograma,HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+    // Endpoint para Atualizar informações do cronograma ( datas prevista , marcos)
+    @PutMapping("/cronogramas/{cronogramaId}")
+    public ResponseEntity<Cronograma> atualiarCronograma(@PathVariable Long cronogramaId , @RequestBody Cronograma cronogramaAtualizado){
+        Optional<Cronograma> cronogramaData = cronogramaRepository.findById(cronogramaId);
+        if (cronogramaData.isEmpty() || cronogramaData.get().getObra().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Cronograma cronogramaExistente = cronogramaData.get();
+        if (cronogramaAtualizado.getDataInicioProjeto() != null){
+            cronogramaExistente.setDataInicioProjeto(cronogramaAtualizado.getDataInicioProjeto());
+        }
+        if (cronogramaAtualizado.getDataTerminoPrevista() != null){
+            cronogramaExistente.setDataTerminoPrevista(cronogramaAtualizado.getDataTerminoPrevista());
+            if (cronogramaExistente.getDataTerminoAtuL() == null || cronogramaExistente.getDataTerminoAtuL().isBefore(cronogramaAtualizado.getDataTerminoPrevista())){
+                cronogramaExistente.setDataTerminoAtuL(cronogramaAtualizado.getDataTerminoPrevista());
+            }
+        }
+        if (cronogramaAtualizado.getMarcosImportantes() != null){
+            cronogramaExistente.setMarcosImportantes(cronogramaAtualizado.getMarcosImportantes());
+        }
+        recalularStatusCronograma(cronogramaExistente);
+
+        return new ResponseEntity<>(cronogramaRepository.save(cronogramaExistente),HttpStatus.OK);
+    }
 }
