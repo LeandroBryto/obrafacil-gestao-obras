@@ -1,5 +1,6 @@
 package leandro.dev.gestao_obras.controller;
 
+import leandro.dev.gestao_obras.dto.GanttTaskDTO;
 import leandro.dev.gestao_obras.enums.StatusCronograma;
 import leandro.dev.gestao_obras.enums.StatusEtapa;
 import leandro.dev.gestao_obras.model.Cronograma;
@@ -8,6 +9,7 @@ import leandro.dev.gestao_obras.model.Obra;
 import leandro.dev.gestao_obras.repository.CronogramaRepository;
 import leandro.dev.gestao_obras.repository.EtapaRepository;
 import leandro.dev.gestao_obras.repository.ObraRepository;
+import org.aspectj.weaver.patterns.IfPointcut;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -156,6 +159,49 @@ public class CronogramaController {
 
         );
         return new ResponseEntity<>(relatorio,HttpStatus.OK);
+    }
+    // Endpoint Para gerar dados para o gráfico de Gantt
+    @GetMapping("/obras/{obraId}/cronograma/gantt")
+    public ResponseEntity<List<GanttTaskDTO>> gerarDadosGantt(@PathVariable Long obraId){
+        Optional<Obra> obraData = obraRepository.findById(obraId);
+        if (obraData.isEmpty() || obraData.get().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        List<Etapa> etapas = etapaRepository.findByObraIdOrderByOrdemAsc(obraId);
+        if (etapas.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        List<GanttTaskDTO> ganttData = new ArrayList<>();
+        for (Etapa etapa : etapas){
+            GanttTaskDTO task = new GanttTaskDTO();
+            task.setId(etapa.getId());
+            task.setText(etapa.getNome());
+            LocalDate starDate = etapa.getDataPrevistaInicio() != null ? etapa.getDataPrevistaInicio() : obraData.get().getDataInicio();
+            LocalDate endData = etapa.getDataPrevistaTermino();
+
+            if (starDate != null){
+                task.setStart_date(starDate.format(GANTT_DATE_FORMATTER));
+            }
+            if (endData != null){
+                task.setEnd_date(endData.format(GANTT_DATE_FORMATTER));
+            }
+            if (starDate != null){
+                task.setDuration((int) ChronoUnit.DAYS.between(starDate, endData) + 1);
+            }
+            task.setProgress(etapa.getPercentualConclusao() / 100.0); // Progresso de 0 a 1
+            task.setParent(0L);
+            task.setStatus(etapa.getStatus().name());
+            if (etapa.getDataRealInicio() != null){
+                task.setReal_start(etapa.getDataRealInicio().format(GANTT_DATE_FORMATTER));
+            }
+            if (etapa.getDataRealTermino() != null){
+                task.setReal_end(etapa.getDataRealTermino().format(GANTT_DATE_FORMATTER));
+            }
+
+            ganttData.add(task);
+        }
+        return new ResponseEntity<>(ganttData, HttpStatus.OK);
     }
     
 
