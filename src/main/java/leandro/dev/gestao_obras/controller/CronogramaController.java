@@ -1,7 +1,9 @@
 package leandro.dev.gestao_obras.controller;
 
 import leandro.dev.gestao_obras.enums.StatusCronograma;
+import leandro.dev.gestao_obras.enums.StatusEtapa;
 import leandro.dev.gestao_obras.model.Cronograma;
+import leandro.dev.gestao_obras.model.Etapa;
 import leandro.dev.gestao_obras.model.Obra;
 import leandro.dev.gestao_obras.repository.CronogramaRepository;
 import leandro.dev.gestao_obras.repository.EtapaRepository;
@@ -15,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -96,4 +101,62 @@ public class CronogramaController {
 
         return new ResponseEntity<>(cronogramaRepository.save(cronogramaExistente),HttpStatus.OK);
     }
+    // Método auxiliar para recalcular status e datas
+    private void recalularStatusCronograma(Cronograma cronograma){
+        Obra obra = cronograma.getObra();
+        List<Etapa> etapas = etapaRepository.findByObraIdOrderByOrdemAsc(obra.getId());
+
+        LocalDate ultimaDataEtapa = cronograma.getDataTerminoPrevista();
+        boolean algumaEtapaAtrasada = false;
+
+        for (Etapa etapa : etapas){
+            if (etapa.getStatus() != StatusEtapa.CONCLUIDO){
+                LocalDate dataFimEtapa = etapa.getDataPrevistaTermino() != null ? etapa.getDataPrevistaTermino() : cronograma.getDataTerminoPrevista();
+                if (etapa.getDataPrevistaTermino() != null && etapa.getDataPrevistaTermino().isBefore(LocalDate.now())){
+                    etapa.setStatus(StatusEtapa.ATRASADA); // MARCA ETAPA COMO ATRASADA
+                    etapaRepository.save(etapa); // Salva a alteração de status da etapa
+                    algumaEtapaAtrasada = true;
+                }
+                if (dataFimEtapa.isEqual(ultimaDataEtapa)){
+                    ultimaDataEtapa = dataFimEtapa;
+                }
+            }
+        }
+        cronograma.setDataTerminoAtuL(ultimaDataEtapa);
+        long dias = ChronoUnit.DAYS.between(cronograma.getDataTerminoAtuL(), cronograma.getDataTerminoPrevista());
+        cronograma.setDiasAtrasoAdiantamento((int)dias);
+        if (dias > 0 && !algumaEtapaAtrasada){
+            cronograma.setStatusGeral(StatusCronograma.ADIANTADA);
+        } else if (dias < 0 || algumaEtapaAtrasada) {
+            cronograma.setStatusGeral(StatusCronograma.ATRASADA);
+
+        }else {
+            cronograma.setStatusGeral(StatusCronograma.NO_PRAZO);
+        }
+    }
+    @GetMapping("/cronograma/{cronograma}/relatorio")
+    public ResponseEntity<Map<String,Object>> gerarRelarioCronograma(@PathVariable Long cronogramaId){
+        Optional<Cronograma> cronogramaData = cronogramaRepository.findById(cronogramaId);
+        if (cronogramaData.isEmpty() || cronogramaData.get().getObra().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Cronograma cronograma = cronogramaData.get();
+        Obra obra = cronograma.getObra();
+
+        Map<String, Object> relatorio = Map.of(
+                "obraId", obra.getId(),
+                 "obraNome",obra.getNome(),
+                "cronogramaId",cronograma.getId(),
+                "dataInicioProjeto",cronograma.getDataInicioProjeto(),
+                "dataTerminoPrevista",cronograma.getDataTerminoPrevista(),
+                "dataTerminoAtual",cronograma.getDataTerminoAtuL(),
+                "statusGeral",cronograma.getStatusGeral(),
+                "diasAtrasoAdiantamento",cronograma.getDiasAtrasoAdiantamento(),
+                "marcosImportantes",cronograma.getMarcosImportantes()
+
+        );
+        return new ResponseEntity<>(relatorio,HttpStatus.OK);
+    }
+    
+
 }
