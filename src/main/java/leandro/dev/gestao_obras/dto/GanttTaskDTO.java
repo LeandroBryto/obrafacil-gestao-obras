@@ -18,7 +18,7 @@ public class GanttTaskDTO {
     private  Double progress;
     private Long parent;
     private  boolean open = true;
-    private String string;
+    private String status;
     private String real_start;
     private String real_end;
 }
