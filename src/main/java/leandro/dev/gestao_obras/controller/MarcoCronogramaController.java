@@ -55,5 +55,21 @@ public class MarcoCronogramaController {
         }else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+    }
+    // Endpoint para remover um marco do cronograma
+    @DeleteMapping("/cronograma/marcos/(id}")
+    public ResponseEntity<HttpStatus> removeMarcoCronograma(@PathVariable Long id){
+        Optional<MarcoCronograma> marcoData = marcoCronogramaRepository.findById(id);
+        if (marcoData.isPresent() && !marcoData.get().getCronograma().getObra().isArquivado()){
+            try {
+                marcoCronogramaRepository.deleteById(id);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }catch (Exception e ){
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
