@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -58,7 +59,7 @@ public class MarcoCronogramaController {
 
     }
     // Endpoint para remover um marco do cronograma
-    @DeleteMapping("/cronograma/marcos/(id}")
+    @DeleteMapping("/cronograma/marcos/{id}")
     public ResponseEntity<HttpStatus> removeMarcoCronograma(@PathVariable Long id){
         Optional<MarcoCronograma> marcoData = marcoCronogramaRepository.findById(id);
         if (marcoData.isPresent() && !marcoData.get().getCronograma().getObra().isArquivado()){
@@ -71,5 +72,18 @@ public class MarcoCronogramaController {
         }else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+    // Endpoint para listar marcos de um cronograma
+    @GetMapping("/cronograma/{cronogramaId}/marcos")
+    public ResponseEntity<List<MarcoCronograma>> listarMarcoPorCronograma(@PathVariable Long cronogramaId){
+        Optional<Cronograma> cronogramaData = cronogramaRepository.findById(cronogramaId);
+        if (cronogramaData.isEmpty() || cronogramaData.get().getObra().isArquivado()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        List<MarcoCronograma> marcos = marcoCronogramaRepository.findByCronogramaId(cronogramaId);
+        if (marcos.isEmpty()){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(marcos,HttpStatus.OK);
     }
 }
