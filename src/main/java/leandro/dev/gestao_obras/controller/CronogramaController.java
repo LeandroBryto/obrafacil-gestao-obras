@@ -20,10 +20,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -203,6 +202,49 @@ public class CronogramaController {
         }
         return new ResponseEntity<>(ganttData, HttpStatus.OK);
     }
+
+    // Endoint para emitir alertar de atraso ( lista obras/ etapas atrasadas)
+    @GetMapping("/alertas/atrasos")
+    public ResponseEntity<List<Map<String,Object>>> emitirAlertasAtraso(){
+        List<Map<String, Object>> alertas = new ArrayList<>();
+
+        // Verifica cronogramas gerais atrasados
+        List<Cronograma> cronogramasAtrasados = cronogramaRepository.findAll().stream()
+                .filter(c -> !c.getObra().isArquivado() && c.getStatusGeral() == StatusCronograma.ATRASADA)
+                .collect(Collectors.toList());
+        for (Cronograma c : cronogramasAtrasados) {
+            alertas.add(Map.of(
+                    "tipo", "CRONOGRAMA_GERAL",
+                    "obraId", c.getObra().getId(),
+                    "obraNome", c.getObra().getNome(),
+                    "mensagem", "Cronograma geral da obra está atrasado.",
+                    "dataTerminoPrevista", c.getDataTerminoPrevista(),
+                    "dataTerminoAtual", c.getDataTerminoAtuL()
+            ));
+        }
+            // Verifica etapas individuais atrasadas ( que não pertencem a obras já alertada globalmente)
+            List<Long> obrasJaAlertadas = cronogramasAtrasados.stream().map(c -> c.getObra().getId()).collect(Collectors.toList());
+            List<Etapa> etapasAtrasadas = etapaRepository.findAll().stream()
+                    .filter(e -> !e.getObra().isArquivado() && e.getStatus() == StatusEtapa.ATRASADA && !obrasJaAlertadas.contains(e.getObra().getId()))
+                    .collect(Collectors.toList());
+            for (Etapa e : etapasAtrasadas){
+                alertas.add(Map.of(
+                        "tipo", "ETAPA",
+                        "obraId", e.getObra().getId(),
+                        "obraNome", e.getObra().getNome(),
+                        "etapaId", e.getId(),
+                        "etapaNome", e.getNome(),
+                        "mensagem", "Etapa está atrasada.",
+                        "dataTerminoPrevista", e.getDataPrevistaTermino()
+                ));
+            }
+            if (alertas.isEmpty()){
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            }
+            return  new ResponseEntity<>(alertas,HttpStatus.OK);
+        }
+    }
+
     
 
-}
+
