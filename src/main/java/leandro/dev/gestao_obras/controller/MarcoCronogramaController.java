@@ -39,4 +39,21 @@ public class MarcoCronogramaController {
             return new ResponseEntity<>(null,HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    // Endpoint para Atualizar um marco do Cronograma
+    @PutMapping("/cronograma/marcos/{id}")
+    public ResponseEntity<MarcoCronograma> arualizarMarcoCronograma(@PathVariable Long id , @RequestBody MarcoCronograma marcoAtualizado){
+        Optional<MarcoCronograma> marcoData = marcoCronogramaRepository.findById(id);
+        if (marcoData.isPresent() && !marcoData.get().getCronograma().getObra().isArquivado()){
+            MarcoCronograma marcoExistente = marcoData.get();
+            marcoExistente.setName(marcoAtualizado.getName());
+            marcoExistente.setDataPrevista(marcoAtualizado.getDataPrevista());
+            marcoExistente.setDescricao(marcoAtualizado.getDescricao());
+            marcoExistente.setDataConclusao(marcoAtualizado.getDataConclusao());
+            marcoExistente.setConcluido(marcoAtualizado.isConcluido());
+
+            return new ResponseEntity<>(marcoCronogramaRepository.save(marcoExistente),HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
 }
